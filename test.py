@@ -3,6 +3,7 @@ import month
 import day
 import year
 import html_escaping
+import make_rot
 
 form = """
 <form method="post">
@@ -26,6 +27,22 @@ form = """
     <br>
     <input type="submit">
 </form>    
+"""
+
+rot = """
+  <head>
+    <title>Unit 2 Rot 13</title>
+  </head>
+
+  <body>
+    <h2>Enter some text to ROT13:</h2>
+    <form method="post">
+      <textarea name="text" value="%(text)s"
+                style="height: 100px; width: 400px;"></textarea>
+      <br>
+      <input type="submit">
+    </form>
+  </body>
 """
 
 
@@ -58,10 +75,26 @@ class MainPage(webapp2.RequestHandler):
 
 class ThanksHandler(webapp2.RequestHandler):
     def get(self):
-        self.response.out.write("Thanks, that's a totally valid day!")                    
+        self.response.out.write("Thanks, that's a totally valid day!")
+
+class Rot13(webapp2.RequestHandler):
+    def write_rot(self, text=""):
+        self.response.out.write(rot % {'text': text})
+
+    def get(self):
+        self.response.out.write(rot)
+
+    def post(self):
+        text = self.request.get('text')
+        rot13_text = make_rot.rot_func(text)
+        escape_rot13_text = html_escaping.escape_html(rot13_text)
+        #self.write_rot(escape_rot13_text)
+        self.response.out.write(escape_rot13_text)
 
 
 
 
-app = webapp2.WSGIApplication([('/', MainPage), ('/thanks', ThanksHandler)],
+
+
+app = webapp2.WSGIApplication([('/', MainPage), ('/thanks', ThanksHandler), ('/unit2/rot13', Rot13)],
                               debug=True)
