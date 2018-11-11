@@ -1,6 +1,5 @@
 # make_rot.py
 
-from __future__ import print_function
 
 #ascii of m is 109
 #ascii of a is 97
@@ -17,21 +16,21 @@ def rot_func(text):
         if asci >= 97 and asci <= 122:
             if asci <= 109:
                 asci = asci + 13
-                #print(chr(asci), end="")
+                
             elif asci > 109:
                 asci = asci - 13
-                #print(chr(asci), end="")
+                
 
         elif asci >= 65 and asci <= 90:
             if asci <= 77:
                 asci = asci + 13
-                #print(chr(asci), end="")
+                
             elif asci > 77:
                 asci = asci - 13
-                #print(chr(asci), end="")
+                
         else:
             rot_text[i] = text[i]
-            #print(s, end="")
+            
         rot_text[i] = chr(asci)
 
         i += 1    
