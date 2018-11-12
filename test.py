@@ -4,6 +4,7 @@ import day
 import year
 import html_escaping
 import make_rot
+import signup_valid
 
 form = """
 <form method="post">
@@ -42,6 +43,79 @@ rot = """
       <input type="submit">
     </form>
   </body>
+"""
+
+signup = """
+    <!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Sign Up</title>
+    <style type="text/css">
+      .label {text-align: right}
+      .error {color: red}
+    </style>
+
+  </head>
+
+  <body>
+    <h2>Signup</h2>
+    <form method="post">
+      <table>
+        <tr>
+          <td class="label">
+            Username
+          </td>
+          <td>
+            <input type="text" name="username" value="%(username)s">
+          </td>
+          <td class="error">
+            %(error_user)s
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">
+            Password
+          </td>
+          <td>
+            <input type="password" name="password" value="">
+          </td>
+          <td class="error">
+            %(error_pass)s
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">
+            Verify Password
+          </td>
+          <td>
+            <input type="password" name="verify" value="">
+          </td>
+          <td class="error">
+            %(error_verify)s
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">
+            Email (optional)
+          </td>
+          <td>
+            <input type="text" name="email" value="%(email)s">
+          </td>
+          <td class="error">
+            %(error_mail)s
+          </td>
+        </tr>
+      </table>
+
+      <input type="submit">
+    </form>
+  </body>
+
+</html>
 """
 
 
@@ -89,7 +163,70 @@ class Rot13(webapp2.RequestHandler):
         escape_rot13_text = html_escaping.escape_html(rot13_text)
         self.write_rot(escape_rot13_text)
 
-        
 
-app = webapp2.WSGIApplication([('/', MainPage), ('/thanks', ThanksHandler), ('/unit2/rot13', Rot13)],
-                              debug=True)
+class UserRegister(webapp2.RequestHandler):
+    def write_signup(self, username="", email="", error_user="", error_pass="", error_verify="", error_mail=""):
+        self.response.out.write(signup % {'username': html_escaping.escape_html(username),
+                                          'email': html_escaping.escape_html(email),
+                                          'error_user': error_user,
+                                          'error_pass': error_pass,
+                                          'error_verify': error_verify,
+                                          'error_mail': error_mail})
+
+    def get(self):
+        self.write_signup()
+
+    def post(self):
+        user = self.request.get('username')
+        password = self.request.get('password')
+        verify = self.request.get('verify')
+        email = self.request.get('email')
+
+        username_verify = signup_valid.valid_username(user)
+        email_verify = signup_valid.valid_email(email)
+        password_verify = signup_valid.valid_password(password, verify)
+
+        if not username_verify:
+            if email_verify and password_verify:
+                self.write_signup(user, email, "That's not a valid username.")
+            elif email_verify and not password_verify:
+                if len(password) < 3:
+                    self.write_signup(user, email, "That's not a valid username.", "That wasn't a valid password.")
+                else:
+                    self.write_signup(user, email, "That's not a valid username.", "", "Your passwords didn't match.")
+            elif not (email_verify and password_verify):
+                if len(password) < 3:
+                    self.write_signup(user, email, "That's not a valid username.", "That wasn't a valid password.", "", "That's not a valid email.")
+                else:
+                    self.write_signup(user, email, "That's not a valid username.", "", "Your passwords didn't match.", "That's not a valid email.")
+            elif password_verify and not email_verify:
+                self.write_signup(user, email, "That's not a valid username.", "", "", "That's not a valid email.")
+
+        elif username_verify:
+            if email_verify and password_verify:
+                self.redirect("/unit2/welcome")
+            elif email_verify and not password_verify:
+                if len(password) < 3:
+                    self.write_signup(user, email, "", "That wasn't a valid password.")
+                else:
+                    self.write_signup(user, email, "", "", "Your passwords didn't match.")
+            elif not (email_verify and password_verify):
+                if len(password) < 3:
+                    self.write_signup(user, email, "", "That wasn't a valid password.", "", "That's not a valid email.")
+                else:
+                    self.write_signup(user, email, "", "Your passwords didn't match.", "That's not a valid email.")
+            else:
+                self.write_signup(user, email, "", "", "", "That's not a valid email.")
+
+
+class Welcome(webapp2.RequestHandler):
+    def get(self):
+        self.response.out.write("Welcome")
+
+
+                
+
+app = webapp2.WSGIApplication([('/', MainPage), ('/thanks', ThanksHandler), ('/unit2/rot13', Rot13), 
+                                ('/unit2/signup', UserRegister), ('/unit2/welcome', Welcome)], debug=True)
+                          
+                              
